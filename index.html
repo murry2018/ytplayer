@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://fonts.sandbox.google.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  </head>
+  <body>
+    <style>
+      #top {
+        margin: 1em;
+        max-width: 1000px;
+        display: flex;
+        flex-direction: row;
+      }
+
+      @media (max-width: 961px) {
+        #top {
+          flex-direction: column;
+        }
+      }
+
+      ul#player-playlist {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+
+      }
+      
+      #playlist-container {
+        margin-left: 5px;
+
+      }
+    
+      #player-playlist li {
+        margin: 5px;
+      }
+   
+      em.playlist-item-active {
+        font-weight: bold;
+        font-style: unset;
+      }
+    
+      em.playlist-item {
+        font-style: unset;
+        cursor: pointer;
+        background-color: darkgray;
+        padding: 0px 4px 0px 4px;
+        border: 1px solid gray;
+      }
+    
+      em.playlist-item:hover {
+        background-color: bisque;
+      }
+    </style>
+    <div id="top">
+      <div>
+        <style>
+          .input-items {
+            display: flex;
+          }
+    
+          .input-items>* {
+            margin: 5px;
+          }
+    
+          input#name-input {
+            width: 200px;
+          }
+    
+          input#id-input {
+            width: 150px;
+          }
+        </style>
+        <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
+        <div id="player"></div>
+        <div class="input-items">
+          <div>
+            <label for="name-input">
+              제목
+            </label>
+            <input id="name-input" type="text" placeholder="동영상 제목..." />
+          </div>
+          <div>
+            <label for="id-input">
+              Video ID
+            </label>
+            <input id="id-input" type="text" placeholder="URL 또는 Video ID..." />
+          </div>
+          <div>
+            <button>재생목록에 추가</button>
+          </div>
+        </div>
+      </div>
+      <div id="playlist-container">
+        <p>재생중인 동영상</p>
+        <ul id="player-playlist">
+    
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      // 2. This code loads the IFrame Player API code asynchronously.
+      var tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      // 3. This function creates an <iframe> (and YouTube player)
+      //    after the API code downloads.
+      var player;
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+          height: '360',
+          width: '640',
+          videoId: 'G6GczDUM270',
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+          }
+        });
+      }
+
+      class Record {
+        constructor(name, id) {
+          this.name = name;
+          this.videoId = id;
+        }
+      }
+
+      var idx = 0;
+      var playlist = [
+          new Record('비밀의 화원', 'U6FopXugJo8'),
+          new Record('Ah-puh', '7n9D8ZeOQv0'),
+          new Record('미아', 'G6GczDUM270'),
+          new Record('아이와 나의 바다', 'TqIAndOnd74'),
+          new Record('이름에게', 'JSOBF_WhqEM')
+      ];
+      subscribers = [
+        function defaultSubscriber(idx) {
+          if (idx < playlist.length) {
+            player.loadVideoById(playlist[idx].videoId);
+          }
+        },
+        drawPlayList
+      ];
+
+
+      function subscribePlaylistIndexChange(fn) {
+        subscribers.push(fn);
+      }
+      function unsubscribePlaylistIndexChange(fn) {
+        subscribers = subscribers.filter(t => t == fn);
+      }
+      function changePlaylistIndex(fn) {
+        var newIdx = fn(idx, playlist);
+        if (typeof newIdx == 'number') {
+          idx = newIdx;
+        }
+        for (var fn of subscribers)
+          fn(idx);
+      }
+
+      function drawPlayList() {
+        function makeRecordButton(content, active, onclick) {
+          var t = document.createTextNode(content);
+          var e = document.createElement('em');
+          e.setAttribute('class', 
+            (active ? 
+             'playlist-item-active':'playlist-item')
+          );
+          e.appendChild(t);
+          if (onclick) {
+            e.style.cursor = 'pointer';
+            e.addEventListener('click', onclick);
+          }
+          return e;
+        }
+
+        function makeBullet(content, active, onclick) {
+          /*    
+            <span class="material-symbols-outlined">
+              close | menu 
+            </span>
+          */
+          var dragger = document.createElement('span');
+          dragger.setAttribute('class', 'material-symbols-outlined');
+          var closer = dragger.cloneNode();
+          var record = makeRecordButton(content, active, onclick);
+          dragger.appendChild(document.createTextNode('menu'));
+          closer.appendChild(document.createTextNode('close'));
+          var span = document.createElement('span');
+          span.appendChild(dragger);
+          span.appendChild(record);
+          span.style.display = 'flex';
+          span.style.alignItems='center';
+          var bullet = document.createElement('li');
+          bullet.style.display='flex';
+          bullet.style.justifyContent='space-between';
+          bullet.style.alignItems='center';
+          bullet.appendChild(span);
+          bullet.appendChild(closer);
+          return bullet;
+        }
+
+        function onBulletClicked(idx) {
+          return () => {
+            changePlaylistIndex(() => idx);
+          };
+        }
+        const playlistElemId = 'player-playlist';
+        var listElem = document.getElementById(playlistElemId);
+        var newListElem = document.createElement('ul');
+        newListElem.setAttribute('id', playlistElemId);
+        for (var i = 0; i < playlist.length; i++) {
+          let strong = null;
+          let onclick = false;
+          if (i === idx) {
+            strong = true;
+          } else {
+            onclick = onBulletClicked(i);
+          }
+          const bullet = makeBullet(playlist[i].name, strong, onclick);
+          newListElem.appendChild(bullet);
+        }
+        listElem.replaceWith(newListElem);
+      }
+
+      function onPlayerReady(event) {
+        changePlaylistIndex(()=>0);
+      }
+
+      
+      function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.ENDED) {
+          changePlaylistIndex(id => id+1)
+          if (idx < playlist.length) {
+            event.target.loadVideoById(playlist[idx].videoId);
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

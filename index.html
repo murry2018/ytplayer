@@ -51,6 +51,10 @@
       em.playlist-item:hover {
         background-color: bisque;
       }
+
+      .error-description {
+        border-left: solid 4px red;
+      }
     </style>
     <div id="top">
       <div>
@@ -89,6 +93,16 @@
           <div>
             <button>재생목록에 추가</button>
           </div>
+        </div>
+        <div>
+          <div>
+            <label for="file-input">또는 파일로부터 로드...</label>
+            <input type="file" id="file-input"/>
+          </div>
+          <p id="file-description">
+            파일은 <code>{"playlist":[{"title":string, "id":string}]}</code>
+            형식이어야 합니다. 
+          </p>
         </div>
       </div>
       <div id="playlist-container">
@@ -145,7 +159,6 @@
         },
         drawPlayList
       ];
-
 
       function subscribePlaylistIndexChange(fn) {
         subscribers.push(fn);
@@ -239,6 +252,56 @@
             event.target.loadVideoById(playlist[idx].videoId);
           }
         }
+      }
+
+      function isIterable(obj) {
+        if (obj == null) {
+          return false;
+        }
+        return typeof obj[Symbol.iterator] === 'function';
+      }
+
+      var fileInputElem = document.getElementById('file-input');
+      var dbg = null;
+      fileInputElem.addEventListener('change', onFileAccept)
+      function onFileAccept(evt) {
+        dbg = evt.target;
+        var file = fileInputElem.files[0];
+        var reader = new FileReader();
+        reader.addEventListener('load', playlistFromFile);
+        reader.readAsText(file);
+      }
+      function playlistFromFile(event) {
+        function isValidJson(json) {
+          if (json == null || !isIterable(json.playlist))
+            return false;
+          for (var item of json.playlist) {
+            if (item.title == null
+                || item.id == null) {
+              return false;
+            }
+          }
+          return true;
+        }
+        var descElem = document.getElementById('file-description');
+        var json = null;
+        try {
+          json = JSON.parse(event.target.result);
+        } catch (e) {
+          json = null;
+        }
+        if (!isValidJson(json)) {
+          descElem.setAttribute('class', 'error-description');
+          return;
+        }
+        descElem.setAttribute('class', '');
+        var newPlaylist = [];
+        for (var item of json.playlist) {
+          let rec = new Record(item.title, item.id);
+          newPlaylist.push(rec);
+        }
+        playlist = newPlaylist;
+        changePlaylistIndex(() => 0);
       }
     </script>
   </body>

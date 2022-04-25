@@ -131,7 +131,8 @@
           videoId: 'G6GczDUM270',
           events: {
             'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
+            'onStateChange': onPlayerStateChange,
+            'onError': onPlayerError
           }
         });
       }
@@ -302,6 +303,10 @@
         }
         playlist = newPlaylist;
         changePlaylistIndex(() => 0);
+      }
+
+      function onPlayerError(event) {
+        changePlaylistIndex((i) => i+1);
       }
     </script>
   </body>

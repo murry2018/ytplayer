@@ -1,0 +1,36 @@
+{
+  "name": "ytplayer",
+  "version": "0.1.0",
+  "description": "non-login youtube playlist",
+  "scripts": {
+    "build": "babel src --out-dir babel_result && webpack build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/murry2018/ytplayer.git"
+  },
+  "author": "murry2018 <2clean8@naver.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/murry2018/ytplayer/issues"
+  },
+  "homepage": "https://github.com/murry2018/ytplayer#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.17.10",
+    "@babel/core": "^7.17.10",
+    "@babel/preset-env": "^7.17.10",
+    "@babel/preset-react": "^7.16.7",
+    "webpack": "^5.72.0",
+    "webpack-cli": "^4.9.2"
+  },
+  "dependencies": {
+    "core-js": "^3.22.4",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0"
+  },
+  "browserslist": [
+    "defaults",
+    "not IE 11"
+  ]
+}

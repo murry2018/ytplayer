@@ -1,21 +1,28 @@
 import { Component, useEffect, useRef } from 'react';
 
+declare global{
+    var YT: any;
+    function onYouTubeIframeAPIReady(): void
+}
+type voidFn = () => void;
+
 // loadYTDone: loadYT 함수가 한 번 호출되면 true가 됨
-let loadYTDone = false;
+let loadYTDone: boolean = false;
 // loadAPIDone: Youtube Iframe API 스크립트의 로딩이 끝나고
 // onYoutubeIframeAPIReady가 호출되면 true가 됨
-let loadAPIDone = false;
+let loadAPIDone: boolean = false;
 // youtubeIframeAPIWating: Youtube Iframe API 스크립트 로딩 중에 다른
 // YoutubePlayer 컴포넌트가 그려질 경우 onYoutubeIframeAPIReady가 호출되지
 // 않았기 때문에 이 대기 리스트에서 실행을 기다리게 된다.
-let youtubeIframeAPIWating = [];
-function loadYT() {
+let youtubeIframeAPIWating: Array<voidFn> = [];
+function loadYT(): void {
     // YouTube Iframe API 스크립트 로드는 단 한 번만 일어남
     if (!loadYTDone) {
-        var tag = document.createElement('script');
+        var tag: HTMLScriptElement = document.createElement('script');
 
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
+        // @ts-ignore (firstScript.parentNode: Object is possibly null)
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
         // 스크립트가 로드되는 동안 렌더링된 YoutubeIframe
@@ -32,27 +39,26 @@ function loadYT() {
     }
 }
 
-/* YoutubeIframeProps: {
- *   YTViewId: String,
- *   height: Number?,
- *   width: Number?,
- *   videoId: String,
- *   events: {
- *     <event name> : (player, event) => void
- *     참고 - https://developers.google.com/youtube/iframe_api_reference#Events
- *   }
- * }
- */
-export function YoutubeIframe(props) {
-    let player;
+type Player = any;
+type YoutubeEvent = any;
+interface YoutubeIframeProps {
+    YTViewId: String,
+    height?: Number,
+    width?: Number,
+    videoId: String,
+    events?: Record<string, (a0: Player, a1: YoutubeEvent) => void>
+    // 참고 - https://developers.google.com/youtube/iframe_api_reference#Events
+}
+
+export function YoutubeIframe(props: YoutubeIframeProps): JSX.Element {
+    let player: Player;
     const playerId = `ytiframe-${props.YTViewId}`;
-    const ref = useRef();
     useEffect(() => {
         loadYT();
-        let eventListeners = {};
+        let eventListeners: Record<string, (a0: YoutubeEvent) => void> = {};
         for (let event in props.events) {
             eventListeners[event] =
-                (e) => props.events[event](player, e);
+                (e) => props.events?.[event](player, e);
         }
         let onAPIReady = () => {
             console.log(`${playerId} loading.`);
